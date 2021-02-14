@@ -1,0 +1,10 @@
+[Unit]
+Description=receive data from equipment via serial port and store eachline seperated by LF in folder
+After=multi-user.target
+
+[Service]
+Type=simple
+ExecStart=/root/ttycsv/ttycsv.py
+
+[Install]
+WantedBy=multi-user.target
