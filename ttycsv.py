@@ -10,7 +10,8 @@ output_folder='/root/ttycsv.data/' #remember ending/
 alarm_time=10
 
 connection_type='tty'
-input_tty='/dev/ttyUSB0'
+#input_tty='/dev/ttyUSB0'
+input_tty='/dev/pts/2'
 ################################################
 
 #ensure logging module is imported
@@ -61,18 +62,25 @@ def signal_handler(signal, frame):
   sgl='signal:'+str(signal)
   logging.debug(sgl)
   logging.debug(frame)
-  
+
+
+  try:
+    cur_file=get_filename()
+    x=open(cur_file,'w')
+    x.write(''.join(byte_array))			#write to file everytime LF received, to prevent big data memory problem
+  except Exception as my_ex:
+    logging.debug(my_ex)
+    logging.debug('Tried to write/open to a non-existant file??')
+  logging.debug('<LF> received. array written to file. byte_array zeroed')
+      
   try:
     if x!=None:
-      x.write(''.join(byte_array))			#write to file everytime LF received, to prevent big data memory problem
       x.close()
-      cur_file=get_filename()
-      x=open(cur_file,'w')
   except Exception as my_ex:
     logging.debug(my_ex)
     
   byte_array=[]							#empty array      
-  logging.debug('Alarm.... <EOT> NOT received. data may be incomplate')
+  logging.debug('Alarm.... <LF> NOT received. data may be incomplate')
 
 def get_filename():
   dt=datetime.datetime.now()
@@ -103,8 +111,6 @@ signal.signal(signal.SIGALRM, signal_handler)
 port=get_port()
 
 byte_array=[]								#initialized to ensure that first byte can be added
-cur_file=get_filename()
-x=open(cur_file,'w')
 
 while True:
   byte=my_read(port)
@@ -121,11 +127,9 @@ while True:
     signal.alarm(0)
     logging.debug('Alarm stopped. LF received')
     try:
-      x.write(''.join(byte_array))			#write to file everytime LF received, to prevent big data memory problem
-      byte_array=[]							#empty array
       cur_file=get_filename()
       x=open(cur_file,'w')
-
+      x.write(''.join(byte_array))			#write to file everytime LF received, to prevent big data memory problem
     except Exception as my_ex:
       logging.debug(my_ex)
       logging.debug('Tried to write/open to a non-existant file??')
@@ -136,3 +140,5 @@ while True:
         x.close()
     except Exception as my_ex:
       logging.debug(my_ex)
+      
+    byte_array=[]
